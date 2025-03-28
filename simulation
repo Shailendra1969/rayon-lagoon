@@ -1,0 +1,68 @@
+import streamlit as st
+import random
+
+st.title("Rayon Lagoon Hotel Revenue Simulation")
+
+# Sidebar for adjustable parameters
+st.sidebar.header("Simulation Parameters")
+forecast_method = st.sidebar.selectbox("Demand Forecasting Method", ["Historical Average", "Time Series", "Predictive Analytics"])
+pricing_strategy = st.sidebar.selectbox("Pricing Strategy", ["Aggressive", "Moderate", "Conservative"])
+seasonality = st.sidebar.selectbox("Seasonality", ["Peak Season", "Off-Peak Season"])
+corporate_discount = st.sidebar.slider("Corporate Discount (%)", 0, 30, 10)
+
+# Initial conditions
+initial_arr = 2000
+weekday_occupancy = 0.40
+weekend_occupancy = 0.80
+competitor_arr_range = (1800, 2300)
+
+# Accuracy based on forecasting method
+accuracy_dict = {"Historical Average": 0.85, "Time Series": 0.90, "Predictive Analytics": 0.95}
+forecast_accuracy = accuracy_dict[forecast_method]
+
+# Pricing strategy impact
+pricing_impact = {"Aggressive": -0.05, "Moderate": 0, "Conservative": 0.05}
+
+# Seasonality impact
+seasonality_factor = 0.1 if seasonality == "Peak Season" else -0.1
+
+# Simulation logic
+competitor_arr = random.randint(*competitor_arr_range)
+st.subheader(f"Competitor ARR: ₹{competitor_arr}")
+
+suggested_arr = competitor_arr + (competitor_arr * pricing_impact[pricing_strategy]) + (competitor_arr * seasonality_factor)
+suggested_arr = round(suggested_arr, 2)
+st.subheader(f"Suggested ARR based on your strategy: ₹{suggested_arr}")
+
+# Adjust occupancy based on pricing
+price_diff_percentage = (suggested_arr - initial_arr) / initial_arr
+occupancy_impact = -price_diff_percentage
+
+weekday_final_occ = min(max(weekday_occupancy + occupancy_impact, 0), 1) * forecast_accuracy
+weekend_final_occ = min(max(weekend_occupancy + occupancy_impact, 0), 1) * forecast_accuracy
+
+# Corporate discount impact
+corporate_occ_boost = corporate_discount / 100 * 0.1
+weekday_final_occ += corporate_occ_boost
+
+weekday_final_occ = min(weekday_final_occ, 1)
+weekend_final_occ = min(weekend_final_occ, 1)
+
+# Revenue Calculation
+weekday_revenue = weekday_final_occ * suggested_arr * 5 * 30
+weekend_revenue = weekend_final_occ * suggested_arr * 2 * 30
+monthly_revenue = weekday_revenue + weekend_revenue
+
+# Display Results
+st.markdown("---")
+st.header("Simulation Results")
+st.write(f"**Weekday Occupancy:** {weekday_final_occ:.2%}")
+st.write(f"**Weekend Occupancy:** {weekend_final_occ:.2%}")
+st.write(f"**Monthly Estimated Revenue:** ₹{monthly_revenue:,.2f}")
+
+# Reflection prompts
+st.markdown("---")
+st.header("Reflection Questions")
+st.markdown("- How did your choice of forecasting method affect the revenue outcome?")
+st.markdown("- What impact did your pricing strategy have on occupancy and revenue?")
+st.markdown("- How could you better manage corporate discounts to optimize revenue?")
